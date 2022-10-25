@@ -17,7 +17,6 @@ import { Pool } from "../generated/schema";
 export function handleDeposit(event: Deposit): void {
   let user = getOrCreateUser(event.address, event.params.user);
   let pool = Pool.load(event.address.toHex())!;
-  user.stakeToken = pool.stakeToken;
   pool.totalTokensStaked = pool.totalTokensStaked.plus(event.params.amount);
   let transaction = getOrCreateHistory(event, user);
   transaction.amount = event.params.amount;

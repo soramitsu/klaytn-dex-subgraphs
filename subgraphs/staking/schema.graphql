@@ -1,44 +1,44 @@
 # Factory
 type Factory @entity {
   id: ID!
-
-  "Total of Pools contracts"
+  "Total number of pools"
   totalPools: BigInt!
 }
 
 # Pool
 type Pool @entity {
   id: ID!
-
   "Stake token"
   stakeToken: Token!
   "Reward token"
   rewardToken: Token!
-
   "Pool start block number"
   startBlock: BigInt!
   "Pool end block number"
   endBlock: BigInt!
-
+  "Last block number when rewards were updated" 
   lastRewardBlock: BigInt!
+  "Accumulated reward per share"
   accTokenPerShare: BigInt!
+  "Total deposited amount"
   totalTokensStaked: BigInt!
+  "Total distributed amount"
   harvested: BigInt!
-
-  "Reward per block (in earnToken)"
+  "Reward per block (in rewardToken)"
   rewardRate: BigDecimal!
+  "Precision for reward calculation"
   precisionFactor: BigInt!
-
   "Limit (if any, in stakeToken)"
   userLimit: BigInt!
   blocksForUserLimit: BigInt
-
   "Block number the pool was created at"
   createdAtBlock: BigInt!
   "Block timestamp the pool was created at"
   createdAtTimestamp: BigInt!
-
+  "Derived: participated users"
   users: [User!]! @derivedFrom(field: "pool")
+  "Derived: pool transaction history"
+  history: [Transaction!]! @derivedFrom(field: "pool")
 }
 
 # Token
@@ -56,19 +56,22 @@ type User @entity {
   "User Address bound to Pool"
   id: ID!
   address: Bytes!
-
+  "Pool address"
   pool: Pool!
-  stakeToken: Token
-
+  "Staked amount (in stakeToken)"
   amount: BigInt!
+  "Harvested amount (in rewardToken)"
   harvested: BigInt!
+  "Reward debt (in rewardToken)"
   rewardDebt: BigInt!
+  "Derived: user transaction history"
   history: [Transaction!]! @derivedFrom(field: "user")
 }
 
 type Transaction @entity {
   id: ID!
   user: User!
+  pool: Pool!
   type: String!
   amount: BigInt!
   harvested: BigInt!
