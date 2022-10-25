@@ -397,7 +397,7 @@ export function handleSwap(event: Swap): void {
   let amount0Total = amount0Out.plus(amount0In);
   let amount1Total = amount1Out.plus(amount1In);
 
-  // BNB/USD prices
+  // KLAY/USD prices
   let bundle = Bundle.load(KlayOracleAddress)!;
 
   // get total amounts of derived USD and KLAY for tracking

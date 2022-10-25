@@ -10,14 +10,14 @@ type Factory @entity {
 type Pool @entity {
   id: ID!
 
-  "Token"
+  "Stake token"
   stakeToken: Token!
-  "Token"
+  "Reward token"
   rewardToken: Token!
 
-  "Start block number"
+  "Pool start block number"
   startBlock: BigInt!
-  "End block number"
+  "Pool end block number"
   endBlock: BigInt!
 
   lastRewardBlock: BigInt!
@@ -33,9 +33,9 @@ type Pool @entity {
   userLimit: BigInt!
   blocksForUserLimit: BigInt
 
-  "Block number"
+  "Block number the pool was created at"
   createdAtBlock: BigInt!
-  "Block timestamp"
+  "Block timestamp the pool was created at"
   createdAtTimestamp: BigInt!
 
   users: [User!]! @derivedFrom(field: "pool")
@@ -44,7 +44,6 @@ type Pool @entity {
 # Token
 type Token @entity {
   id: ID!
-
   "Name"
   name: String!
   "Symbol"
@@ -64,5 +63,15 @@ type User @entity {
   amount: BigInt!
   harvested: BigInt!
   rewardDebt: BigInt!
-  
+  history: [Transaction!]! @derivedFrom(field: "user")
+}
+
+type Transaction @entity {
+  id: ID!
+  user: User!
+  type: String!
+  amount: BigInt!
+  harvested: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
 }

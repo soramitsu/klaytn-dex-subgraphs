@@ -1,5 +1,5 @@
-import { Address } from "@graphprotocol/graph-ts";
-import { User } from "../../generated/schema";
+import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { User, Transaction } from "../../generated/schema";
 import { ZERO_BI } from "./index"
 
 export function getOrCreateUser(poolAddress: Address, address: Address): User {
@@ -18,4 +18,21 @@ export function getOrCreateUser(poolAddress: Address, address: Address): User {
   }
 
   return user as User;
+}
+
+export function getOrCreateHistory(event: ethereum.Event, user: User): Transaction {
+  let transaction = Transaction.load(event.transaction.hash.toHex());
+
+  if (transaction === null) {
+    transaction = new Transaction(event.transaction.hash.toHex());
+    transaction.user = user.id;
+    transaction.type = "unknown";
+    transaction.amount = ZERO_BI;
+    transaction.harvested = ZERO_BI;
+    transaction.timestamp = event.block.timestamp;
+    transaction.blockNumber = event.block.number;
+    transaction.save();
+  }
+
+  return transaction as Transaction;
 }

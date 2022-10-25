@@ -24,8 +24,8 @@ let WHITELIST: string[] = [
 let MINIMUM_LIQUIDITY_THRESHOLD_KLAY = BigDecimal.fromString('1')
 
 /**
- * Search through graph to find derived BNB per token.
- * @todo update to be derived BNB (add stablecoin estimates)
+ * Search through graph to find derived KLAY per token.
+ * @todo update to be derived KLAY (add stablecoin estimates)
  **/
  export function findKlayPerToken(token: Token): BigDecimal {
     let res = token.id == WKLAY_ADDRESS;
