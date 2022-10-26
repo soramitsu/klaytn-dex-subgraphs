@@ -83,6 +83,7 @@ export function handleEmergencyWithdraw(event: EmergencyWithdraw): void {
   let transaction = getOrCreateHistory(event, user);
   transaction.amount = event.params.amount;
   transaction.type = "emergencyWithdraw";
+  transaction.save();
   user.save();
 }
 
