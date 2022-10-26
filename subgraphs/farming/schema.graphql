@@ -1,49 +1,79 @@
 type Farming @entity {
-  # Contract address
+  "Farming contract address"
   id: ID!
+  "Sum of all allocation points"
   totalAllocPoint: BigInt!
+  "Reward rate per block in DEX token"
   rewardRate: BigInt!
+  "Farming start block"
   startBlock: BigInt!
-
+  "Derived: pool"
   pools: [Pool!] @derivedFrom(field: "farming")
+  "Total number of pools"
   poolCount: BigInt!
   updatedAtTimestamp: BigInt!
   updatedAtBlock: BigInt!
 }
 
 type Pool @entity {
-  # Index of pool in poolInfo on MasterChef contract
+  "Index of pool in poolInfo on MasterChef contract"
   id: ID!
+  "Farmaing contract address"
   farming: Farming!
+  "Pair contract address"
   pair: Bytes!
-
+  "Pool allocation point"
   allocPoint: BigInt!
+  "Last block number when rewards were updated"
   lastRewardBlock: BigInt!
+  "Accumulated reward per share"
   accPtnPerShare: BigInt!
+  "Total deposited amount"
   totalTokensStaked: BigInt!
+  "Bonus reward multiplier"
   bonusMultiplier: BigInt!
   bonusEndBlock: BigInt!
+  "Total deposited amount"
   harvested: BigInt!
-  users: [User!]! @derivedFrom(field: "pool")
-  # total user include deposit and withdraw all
+  "Total user include deposit and withdraw all"
   totalUsersCount: BigInt!
+  "Active user count(who has deposit)"
   userCount: BigInt!
-  
+  "Creation block"
   createdAtBlock: BigInt!
   updatedAtTimestamp: BigInt!
   updatedAtBlock: BigInt!
+  "Derived: users"
+  users: [User!]! @derivedFrom(field: "pool")
+  "Derived: pool history"
+  history: [Transaction!]! @derivedFrom(field: "pool")
 }
 
 type User @entity {
-  # Pool id concatenated with user address
+  "Pool id concatenated with user address"
   id: ID!
-
+  "User address"
   address: Bytes!
+  "Pool id"
   pool: Pool!
-
+  "Deposited amount"
   amount: BigInt!
+  "Reward debt (in rewardToken)"
   rewardDebt: BigInt!
+  "Harvested amount (in rewardToken)"
   harvested: BigInt!
   updatedAtTimestamp: BigInt!
   updatedAtBlock: BigInt!
+  history: [Transaction!]! @derivedFrom(field: "user")
+}
+
+type Transaction @entity {
+  id: ID!
+  user: User!
+  pool: Pool!
+  type: String!
+  amount: BigInt!
+  harvested: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
 }

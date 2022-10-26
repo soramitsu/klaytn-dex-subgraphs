@@ -12,7 +12,7 @@ import {
 } from "../generated/Farming/Farming";
 import { getOrCreateFarming } from "./farmingUpdates";
 import { getOrCreatePool } from "./poolUpdates";
-import { getOrCreateUser } from "./userUpdates";
+import { getOrCreateUser, getOrCreateHistory } from "./userUpdates";
 import { ACC_PRECISION, BI_ONE, BI_ZERO } from "./utils";
 
 export function handleAddPool(event: AddPool): void {
@@ -78,7 +78,9 @@ export function handleDeposit(event: Deposit): void {
 
     const pool = getOrCreatePool(event.params.pid, event.block);
     const user = getOrCreateUser(event.params.user, pool, event.block);
-
+    let transaction = getOrCreateHistory(event, user);
+    transaction.amount = event.params.amount;
+    transaction.type = event.params.amount.gt(BI_ZERO) ? "deposit" : "harvest";
     pool.totalTokensStaked = pool.totalTokensStaked.plus(event.params.amount);
     if (event.block.number.gt(pool.createdAtBlock) && user.amount.gt(BI_ZERO)) {
         const pending = user.amount
@@ -92,13 +94,14 @@ export function handleDeposit(event: Deposit): void {
         if (pending.gt(BI_ZERO)) {
           user.harvested = user.harvested.plus(pending)
           pool.harvested = pool.harvested.plus(pending)
+          transaction.harvested = pending;
         }
     }
     user.amount = user.amount.plus(event.params.amount);
     user.rewardDebt = user.amount
         .times(pool.accPtnPerShare)
         .div(ACC_PRECISION);
-
+    transaction.save();
     pool.save();
     user.save();
 }
@@ -112,8 +115,9 @@ export function handleWithdraw(event: Withdraw): void {
 
     const pool = getOrCreatePool(event.params.pid, event.block);
     const user = getOrCreateUser(event.params.user, pool, event.block);
-
-
+    let transaction = getOrCreateHistory(event, user);
+    transaction.amount = event.params.amount;
+    transaction.type = event.params.amount.gt(BI_ZERO) ? "withdraw" : "harvest";
     pool.totalTokensStaked = pool.totalTokensStaked.minus(event.params.amount);
     if (event.block.number.gt(pool.createdAtBlock) && user.amount.gt(BI_ZERO)) {
         const pending = user.amount
@@ -127,6 +131,7 @@ export function handleWithdraw(event: Withdraw): void {
         if (pending.gt(BI_ZERO)) {
           user.harvested = user.harvested.plus(pending)
           pool.harvested = pool.harvested.plus(pending)
+          transaction.harvested = pending;
         }
     }
     user.amount = user.amount.minus(event.params.amount);
@@ -138,7 +143,7 @@ export function handleWithdraw(event: Withdraw): void {
     user.rewardDebt = user.amount
         .times(pool.accPtnPerShare)
         .div(ACC_PRECISION);
-
+    transaction.save();
     pool.save();
     user.save();
 }
@@ -152,7 +157,10 @@ export function handleEmergencyWithdraw(event: EmergencyWithdraw): void {
 
     const pool = getOrCreatePool(event.params.pid, event.block);
     const user = getOrCreateUser(event.params.user, pool, event.block);
-
+    let transaction = getOrCreateHistory(event, user);
+    transaction.amount = event.params.amount;
+    transaction.type = "emergencyWithdraw";
+    transaction.save();
     user.amount = BI_ZERO;
     user.rewardDebt = BI_ZERO;
     pool.userCount = pool.userCount.minus(BI_ONE);
