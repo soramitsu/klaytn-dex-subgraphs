@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { log } from "@graphprotocol/graph-ts";
+import { dataSource, log } from "@graphprotocol/graph-ts";
 import {
     AddPool,
     Deposit,
@@ -16,16 +16,16 @@ import { getOrCreateUser, getOrCreateHistory } from "./userUpdates";
 import { ACC_PRECISION, BI_ONE, BI_ZERO } from "./utils";
 
 export function handleAddPool(event: AddPool): void {
-    log.info("[Farming] Add Pool {} {} {} {}", [
+    log.info("[Farming] Add Pool with pid {} {} {} {} {}", [
         event.params.pid.toString(),
         event.params.allocPoint.toString(),
         event.params.token.toHex(),
         event.params.bonusMultiplier.toString(),
         event.params.bonusEndBlock.toString()
     ]);
-
-    const farming = getOrCreateFarming(event.block);
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address(); 
+    const farming = getOrCreateFarming(event.block, farmingAddress);
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
 
     pool.pair = event.params.token;
     pool.allocPoint = event.params.allocPoint;
@@ -41,8 +41,9 @@ export function handleAddPool(event: AddPool): void {
 export function handleSetPool(event: SetPool): void {
     log.info("[Farming] ˝Set Pool {} {}", [event.params.pid.toString(), event.params.allocPoint.toString()]);
 
-    const farming = getOrCreateFarming(event.block);
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address(); 
+    const farming = getOrCreateFarming(event.block, farmingAddress);
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
 
     farming.totalAllocPoint = farming.totalAllocPoint.plus(
         event.params.allocPoint.minus(pool.allocPoint)
@@ -61,8 +62,8 @@ export function handleUpdatePool(event: UpdatePool): void {
         event.params.lpSupply.toString(),
         event.params.accPtnPerShare.toString(),
     ]);
-
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address();
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
 
     pool.accPtnPerShare = event.params.accPtnPerShare;
     pool.lastRewardBlock = event.params.lastRewardBlock;
@@ -75,8 +76,8 @@ export function handleDeposit(event: Deposit): void {
         event.params.pid.toString(),
         event.params.amount.toString(),
     ]);
-
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address();
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
     const user = getOrCreateUser(event.params.user, pool, event.block);
     let transaction = getOrCreateHistory(event, user);
     transaction.amount = event.params.amount;
@@ -97,6 +98,9 @@ export function handleDeposit(event: Deposit): void {
           transaction.harvested = pending;
         }
     }
+    if (user.amount.equals(BI_ZERO)) {
+        pool.userCount = pool.userCount.plus(BI_ONE);
+    }
     user.amount = user.amount.plus(event.params.amount);
     user.rewardDebt = user.amount
         .times(pool.accPtnPerShare)
@@ -112,8 +116,8 @@ export function handleWithdraw(event: Withdraw): void {
         event.params.pid.toString(),
         event.params.amount.toString(),
     ]);
-
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address(); 
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
     const user = getOrCreateUser(event.params.user, pool, event.block);
     let transaction = getOrCreateHistory(event, user);
     transaction.amount = event.params.amount;
@@ -154,8 +158,8 @@ export function handleEmergencyWithdraw(event: EmergencyWithdraw): void {
         event.params.pid.toString(),
         event.params.amount.toString(),
     ]);
-
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address(); 
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
     const user = getOrCreateUser(event.params.user, pool, event.block);
     let transaction = getOrCreateHistory(event, user);
     transaction.amount = event.params.amount;
@@ -168,22 +172,23 @@ export function handleEmergencyWithdraw(event: EmergencyWithdraw): void {
 }
 
 export function handleUpdateRewardPerBlock(event: UpdateRewardPerBlock): void {
-    log.info("[Farming] Update Reward Rate {} {} {}", [
+    log.info("[Farming] Update Reward Rate {}", [
         event.params.rewardPerBlock.toString(),
     ]);
 
-    const farming = getOrCreateFarming(event.block);
+    const farmingAddress = dataSource.address(); 
+    const farming = getOrCreateFarming(event.block, farmingAddress);
     farming.rewardRate = event.params.rewardPerBlock;
     farming.save();
 }
 
 export function handleUpdatePoolMultiplier(event: UpdatePoolMultiplier): void {
-    log.info("[Farming] Update Pool Multiplier {} {} {} {}", [
+    log.info("[Farming] Update Pool Multiplier {} {}", [
         event.params.pid.toString(),
         event.params.multiplier.toString(),
     ]);
-
-    const pool = getOrCreatePool(event.params.pid, event.block);
+    const farmingAddress = dataSource.address(); 
+    const pool = getOrCreatePool(event.params.pid, event.block, farmingAddress);
     pool.bonusMultiplier = event.params.multiplier;
     pool.save();
 }
